@@ -1,9 +1,6 @@
-import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { db } from '@/lib/db'
-import { pages } from '@/db/schema'
-import { eq } from 'drizzle-orm'
-import { Block } from '@/types/editor'
+import { parseBlocks } from '@/lib/blocks'
+import { getOwnedPage } from '@/lib/auth'
 import EditorWrapper from '@/components/editor/editor-wrapper'
 
 type Props = {
@@ -13,22 +10,23 @@ type Props = {
 export default async function PageEditor({ params }: Props) {
     const { workspaceId, pageId } = await params
 
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) redirect('/login')
+    const owned = await getOwnedPage(pageId)
+    if (!owned) redirect('/dashboard')
 
-    const [page] = await db
-        .select()
-        .from(pages)
-        .where(eq(pages.id, pageId))
+    const { page } = owned
+    if (page.workspaceId !== workspaceId) redirect('/dashboard')
 
-    if (!page) redirect(`/workspace/${workspaceId}`)
-
-    const initialBlocks: Block[] = (page.content as Block[]) || []
+    const initialBlocks = parseBlocks(page.content)
 
     return (
-        <div className="min-h-screen bg-white">
-            <div className="border-b px-8 py-3 text-sm text-gray-500">
+        <div
+            className="min-h-screen"
+            style={{
+                backgroundImage: 'radial-gradient(circle, #d1d5db 0.8px, transparent 0.8px)',
+                backgroundSize: '16px 16px',
+            }}
+        >
+            <div className="border-b border-gray-200 bg-white/70 backdrop-blur-sm px-12 py-3 text-sm text-gray-400 font-medium tracking-wide sticky top-0">
                 {page.title}
             </div>
             <EditorWrapper

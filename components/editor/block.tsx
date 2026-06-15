@@ -1,9 +1,7 @@
 'use client'
 
-import { KeyboardEvent } from 'react'
+import { KeyboardEvent, useEffect, useRef } from 'react'
 import { Block } from '@/types/editor'
-
-
 
 type BlockProps = {
   block: Block
@@ -14,6 +12,54 @@ type BlockProps = {
   onRef: (el: HTMLElement | null) => void
 }
 
+type EditableProps = {
+  block: Block
+  onChange: (id: string, content: string) => void
+  onKeyDown: (e: KeyboardEvent<HTMLElement>, id: string) => void
+  onRef: (el: HTMLElement | null) => void
+  className?: string
+  Tag?: 'p' | 'h1' | 'h2' | 'h3' | 'span' | 'div'
+}
+
+function Editable({
+  block,
+  onChange,
+  onKeyDown,
+  onRef,
+  className = '',
+  Tag = 'p',
+}: EditableProps) {
+  const innerRef = useRef<HTMLElement | null>(null)
+
+  useEffect(() => {
+    const el = innerRef.current
+    if (!el) return
+    if (document.activeElement === el) return
+    if (el.textContent !== block.content) {
+      el.textContent = block.content
+    }
+  }, [block.id, block.type, block.content])
+
+  const setRef = (el: HTMLElement | null) => {
+    innerRef.current = el
+    onRef(el)
+    if (el && el.textContent !== block.content) {
+      el.textContent = block.content
+    }
+  }
+
+  return (
+    <Tag
+      ref={setRef as never}
+      contentEditable
+      suppressContentEditableWarning
+      onInput={(e) => onChange(block.id, e.currentTarget.textContent || '')}
+      onKeyDown={(e) => onKeyDown(e, block.id)}
+      className={`outline-none w-full min-h-[1.5rem] cursor-text whitespace-pre-wrap ${className}`}
+    />
+  )
+}
+
 export default function BlockComponent({
   block,
   onChange,
@@ -21,50 +67,42 @@ export default function BlockComponent({
   onToggleTodo,
   onRef,
 }: BlockProps) {
-
-
-  const editableProps = {
-    contentEditable: true as const,
-    suppressContentEditableWarning: true,
-    onInput: (e: React.FormEvent<HTMLElement>) =>
-      onChange(block.id, e.currentTarget.textContent || ''),
-    onKeyDown: (e: KeyboardEvent<HTMLElement>) => onKeyDown(e, block.id),
-    className: 'outline-none w-full min-h-[1.5rem] cursor-text',
-    ref: (el: HTMLElement | null) => {
-      onRef(el)
-      if (el && el.textContent !== block.content) {
-        el.textContent = block.content
-      }
-    },
-  }
   if (block.type === 'heading_1') {
     return (
-      <h1
-        {...editableProps}
-        className={`${editableProps.className} text-3xl font-bold`}
+      <Editable
+        block={block}
+        onChange={onChange}
+        onKeyDown={onKeyDown}
+        onRef={onRef}
+        Tag="h1"
+        className="text-3xl font-bold"
       />
-
     )
   }
 
   if (block.type === 'heading_2') {
     return (
-      <h2
-        {...editableProps}
-        className={`${editableProps.className} text-2xl font-semibold`}
+      <Editable
+        block={block}
+        onChange={onChange}
+        onKeyDown={onKeyDown}
+        onRef={onRef}
+        Tag="h2"
+        className="text-2xl font-semibold"
       />
-
     )
   }
 
   if (block.type === 'heading_3') {
     return (
-      <h3
-
-        {...editableProps}
-        className={`${editableProps.className} text-xl font-medium`}
+      <Editable
+        block={block}
+        onChange={onChange}
+        onKeyDown={onKeyDown}
+        onRef={onRef}
+        Tag="h3"
+        className="text-xl font-medium"
       />
-
     )
   }
 
@@ -75,13 +113,16 @@ export default function BlockComponent({
           type="checkbox"
           checked={block.checked || false}
           onChange={() => onToggleTodo(block.id)}
-          className="mt-1 cursor-pointer"
+          className="mt-1.5 cursor-pointer"
         />
-        <span
-          {...editableProps}
-          className={`${editableProps.className} ${block.checked ? 'line-through text-gray-400' : ''}`}
+        <Editable
+          block={block}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+          onRef={onRef}
+          Tag="span"
+          className={block.checked ? 'line-through text-gray-400' : ''}
         />
-
       </div>
     )
   }
@@ -89,19 +130,26 @@ export default function BlockComponent({
   if (block.type === 'bullet') {
     return (
       <div className="flex items-start gap-2">
-        <span className="mt-1 text-gray-600 flex-shrink-0">•</span>
-        <span
-          {...editableProps}
+        <span className="text-gray-600 flex-shrink-0">•</span>
+        <Editable
+          block={block}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+          onRef={onRef}
+          Tag="span"
         />
       </div>
     )
   }
 
   return (
-    <p
-      {...editableProps}
-      className={`${editableProps.className} text-gray-800`}
+    <Editable
+      block={block}
+      onChange={onChange}
+      onKeyDown={onKeyDown}
+      onRef={onRef}
+      Tag="p"
+      className="text-gray-800"
     />
-
   )
 }

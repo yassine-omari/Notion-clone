@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback } from 'react'
 import Editor from './editor'
 import { Block } from '@/types/editor'
 import { savePageContent } from '@/app/actions/pages'
@@ -10,13 +11,13 @@ type Props = {
 }
 
 export default function EditorWrapper({ pageId, initialBlocks }: Props) {
-    async function handleSave(blocks: Block[]) {
+    const handleSave = useCallback(async (blocks: Block[]) => {
         await savePageContent(pageId, blocks)
-    }
+    }, [pageId])
 
     return (
         <Editor
-            pageId={pageId}
+            key={pageId}
             initialBlocks={initialBlocks}
             onSave={handleSave}
         />

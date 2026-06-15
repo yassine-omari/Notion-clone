@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import LoadingBar from '@/components/ui/loading-bar'
 
 export const metadata: Metadata = {
   title: 'Notion Clone',
@@ -13,7 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <LoadingBar />
+        {children}
+      </body>
     </html>
   )
 }
